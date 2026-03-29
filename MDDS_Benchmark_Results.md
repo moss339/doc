@@ -1,89 +1,89 @@
-# MDDS Decentralized Discovery Benchmark Results
+# MDDS 去中心化发现基准测试结果
 
-## Test Environment
+## 测试环境
 
-- **Platform**: Linux 5.15.0-91-generic
-- **Test Date**: 2026-03-23
-- **Multicast Address**: 239.255.0.1
-- **Discovery Port**: 7411
-- **Data Port**: 7412
-- **Test Method**: Multi-threaded within single process (each thread is an independent instance)
+- **平台**: Linux 5.15.0-91-generic
+- **测试日期**: 2026-03-23
+- **多播地址**: 239.255.0.1
+- **发现端口**: 7411
+- **数据端口**: 7412
+- **测试方法**: 单进程内多线程（每个线程为独立实例）
 
-## Test Configuration
+## 测试配置
 
-- Each publisher instance sends 10 data messages
-- Each subscriber receives messages from all publishers via UDP multicast
-- Test duration: 3-5 seconds per run
+- 每个发布者实例发送 10 条数据消息
+- 每个订阅者通过 UDP 多播接收所有发布者的消息
+- 测试持续时间: 每次运行 3-5 秒
 
-## Results
+## 测试结果
 
-| Instances (Pub+Sub) | Messages Sent | Total Received | Per-Subscriber | Loss Rate | Publish Time |
-|-------------------|---------------|-----------------|-----------------|-----------|--------------|
-| 10 + 10           | 100           | 1,000          | 100             | 0%        | ~2009 ms     |
-| 20 + 20           | 200           | 4,000          | 200             | 0%        | ~2031 ms     |
-| 30 + 30           | 300           | 9,000          | 300             | 0%        | ~2043 ms     |
-| 50 + 50           | 500           | 25,000         | 500             | 0%        | ~2078 ms     |
+| 实例数 (发布者+订阅者) | 发送消息数 | 总接收消息数 | 每订阅者接收 | 丢包率 | 发布耗时 |
+|-------------------|------------|-----------------|-----------------|-----------|--------------|
+| 10 + 10           | 100        | 1,000          | 100             | 0%        | ~2009 ms     |
+| 20 + 20           | 200        | 4,000          | 200             | 0%        | ~2031 ms     |
+| 30 + 30           | 300        | 9,000          | 300             | 0%        | ~2043 ms     |
+| 50 + 50           | 500        | 25,000         | 500             | 0%        | ~2078 ms     |
 
-**Expected**: N publishers × M messages = N×M total messages sent
-**Result**: Each subscriber receives N×M messages (all publishers' messages)
+**预期**: N 个发布者 × M 条消息 = N×M 条总发送消息数
+**结果**: 每个订阅者接收 N×M 条消息（所有发布者的消息）
 
-## Performance Analysis
+## 性能分析
 
-### 1. Scalability
-- **Linear scaling**: Publish time remains nearly constant (~2 seconds) regardless of instance count
-- **Message delivery**: 100% delivery rate within single process
-- **CPU overhead**: Each instance has a dedicated receive thread polling at 1ms intervals
+### 1. 可扩展性
+- **线性扩展**: 发布耗时基本保持恒定（~2秒），与实例数量无关
+- **消息投递**: 单进程内 100% 投递率
+- **CPU 开销**: 每个实例有独立接收线程，以 1ms 间隔轮询
 
-### 2. Latency
-- First message received: ~500ms after publishers start (discovery + initial delay)
-- This includes:
-  - 500ms wait in publisher before sending (discovery time)
-  - Multicast announcement interval (default 5 seconds, but loopback is fast)
+### 2. 延迟
+- 首条消息接收时间: 发布者启动后约 500ms（发现 + 初始延迟）
+- 包含内容:
+  - 发布者发送前等待 500ms（发现时间）
+  - 多播宣告间隔（默认 5 秒，但回环网络很快）
 
-### 3. Resource Usage
-- Each instance consumes ~1 thread
-- Memory usage per instance: ~few MB (mostly for buffers)
-- Socket count: 1 per instance (for data) + 1 per instance (for discovery)
+### 3. 资源使用
+- 每个实例占用约 1 个线程
+- 每个实例内存使用: 约几 MB（主要用于缓冲区）
+- 套接字数量: 每个实例 1 个（用于数据）+ 每个实例 1 个（用于发现）
 
-## Observations
+## 观察结果
 
-### What's Working Well
-1. **Zero packet loss** in multi-threaded single-process tests
-2. **Linear scalability** - publish time doesn't increase significantly with more instances
-3. **All subscribers receive all messages** from all publishers
+### 运行良好的方面
+1. **零丢包** - 多线程单进程测试中无数据包丢失
+2. **线性可扩展性** - 发布耗时不会随实例增加而显著增加
+3. **所有订阅者接收所有消息** - 来自所有发布者的消息
 
-### Potential Bottlenecks (Not Observed in Tests)
-1. **System igmp_max_memberships** (typically 20) limits multicast group membership
-   - Multi-process tests showed message loss at 50+ instances
-   - Single-process tests bypass this limitation
-2. **UDP buffer overflow** at high message rates (not observed in these tests)
-3. **Discovery delay** - 5 second announcement interval is conservative
+### 未在测试中观察到的潜在瓶颈
+1. **系统 igmp_max_memberships**（通常为 20）限制多播组成员数量
+   - 多进程测试显示 50+ 实例时出现消息丢失
+   - 单进程测试绕过了此限制
+2. **高消息速率下的 UDP 缓冲区溢出**（在这些测试中未观察到）
+3. **发现延迟** - 5 秒的宣告间隔较为保守
 
-## Optimization Opportunities
+## 优化机会
 
-1. **Reduce announcement interval**: Change `ANNOUNCE_INTERVAL_SEC` from 5 to 1 second
-2. **Event-driven receive**: Replace 1ms polling with epoll/select for lower CPU usage
-3. **Increase UDP buffers**: Add `SO_RCVBUF` configuration for high-throughput scenarios
-4. **First announcement**: Send immediately on start, not waiting for interval
+1. **减少宣告间隔**: 将 `ANNOUNCE_INTERVAL_SEC` 从 5 秒改为 1 秒
+2. **事件驱动接收**: 用 epoll/select 替换 1ms 轮询，以降低 CPU 使用率
+3. **增加 UDP 缓冲区**: 为高吞吐量场景添加 `SO_RCVBUF` 配置
+4. **首次宣告**: 启动时立即发送，无需等待间隔
 
-## Test Command
+## 测试命令
 
 ```bash
-# Subscribers (run first, in background)
+# 订阅者（先运行，后台执行）
 ./discovery_benchmark -n <count> -s -d <duration>
 
-# Publishers (run after subscribers)
+# 发布者（在订阅者之后运行）
 /mnt/data/workspace/moss/mdds/build/benchmark/discovery_benchmark -n <count> -m <messages>
 ```
 
-## Conclusions
+## 结论
 
-The decentralized discovery mechanism in MDDS demonstrates:
-- **Excellent scalability** up to 50+ instances in single process
-- **Zero message loss** when system resources are available
-- **Linear performance** characteristics suitable for embedded systems
+MDDS 中的去中心化发现机制表现如下:
+- **出色的可扩展性** - 单进程中 50+ 实例表现良好
+- **零消息丢失** - 当系统资源充足时
+- **线性性能特征** - 适用于嵌入式系统
 
-For production deployments with many nodes across multiple machines, consider:
-1. Increasing system multicast limits (`net.ipv4.igmp_max_memberships`)
-2. Using multiple multicast groups for very large deployments (>20 nodes)
-3. Implementing message acknowledgment for critical data
+对于跨多台机器的许多节点的生产部署，请考虑:
+1. 增加系统多播限制（`net.ipv4.igmp_max_memberships`）
+2. 对于非常大的部署（>20 个节点），使用多个多播组
+3. 对关键数据实现消息确认机制
