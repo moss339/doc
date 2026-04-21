@@ -639,7 +639,293 @@ Week 7-8:   架构清理
 
 ---
 
-## 六、验收标准
+## 六、未来模块开发计划
+
+以下模块已纳入未来开发路线图，按交付优先级分阶段实施。
+
+### 6.1 mdiag - UDS 诊断模块 (Phase 1, P0)
+
+**优先级理由**: 车载系统合规要求，ASIL 等级必须
+
+**目录结构**:
+
+```
+mdiag/
+├── include/mdiag/
+│   ├── mdiag.h              # 主头文件
+│   ├── uds_server.h         # UDS 服务端
+│   ├── dtc_manager.h        # 故障码管理
+│   ├── snapshot.h           # 快照数据捕获
+│   └── types.h              # 类型定义
+├── src/
+│   ├── uds_server.cpp
+│   ├── dtc_manager.cpp
+│   ├── snapshot.cpp
+│   └── main.cpp
+├── test/
+├── CMakeLists.txt
+└── README.md
+```
+
+**核心功能**:
+
+| 功能 | 描述 |
+|------|------|
+| UDS 协议 | 支持 ISO 14229 标准诊断服务 |
+| DTC 管理 | 故障码存储、检索、清除 |
+| Snapshot | 故障发生时的数据快照捕获 |
+| 会话管理 | 诊断会话状态机 |
+
+**依赖**: mcom, mlog, mparam
+
+**验收标准**:
+- [ ] 支持 UDS 0x10 (Diagnostic Session Control)
+- [ ] 支持 UDS 0x19 (Read DTC Information)
+- [ ] 支持 UDS 0x14 (Clear Diagnostic Information)
+- [ ] DTC 持久化存储
+- [ ] Snapshot 数据捕获
+
+---
+
+### 6.2 mrecord - 数据录制模块 (Phase 1, P0)
+
+**优先级理由**: 自动驾驶必需的数据回放能力
+
+**目录结构**:
+
+```
+mrecord/
+├── include/mrecord/
+│   ├── mrecord.h            # 主头文件
+│   ├── recorder.h           # 录制器
+│   ├── player.h             # 回放器
+│   ├── mcap_writer.h        # MCAP 格式写入
+│   ├── mcap_reader.h        # MCAP 格式读取
+│   └── types.h              # 类型定义
+├── src/
+│   ├── recorder.cpp
+│   ├── player.cpp
+│   ├── mcap_writer.cpp
+│   ├── mcap_reader.cpp
+│   └── main.cpp
+├── test/
+├── CMakeLists.txt
+└── README.md
+```
+
+**核心功能**:
+
+| 功能 | 描述 |
+|------|------|
+| MCAP 格式 | 支持 MCAP 标准录制格式 |
+| Topic 录制 | 多 Topic 并发录制 |
+| 时间索引 | 基于时间戳的数据索引 |
+| 循环缓冲 | 可选的循环缓冲存储模式 |
+| 触发录制 | 事件触发的录制控制 |
+| 数据回放 | 按时间戳回放录制数据 |
+
+**依赖**: mdds, mlog, mcom
+
+**验收标准**:
+- [ ] 支持多 Topic 并发录制
+- [ ] MCAP 格式写入/读取
+- [ ] 支持时间索引回放
+- [ ] 支持触发式录制
+- [ ] 回放速率可调
+
+---
+
+### 6.3 mperf - 性能监控模块 (Phase 2, P1)
+
+**优先级理由**: 生产环境必需的运行时可观测性
+
+**目录结构**:
+
+```
+mperf/
+├── include/mperf/
+│   ├── mperf.h              # 主头文件
+│   ├── metrics.h            # 指标定义
+│   ├── collector.h          # 数据采集器
+│   ├── exporter.h           # 导出器
+│   └── types.h              # 类型定义
+├── src/
+│   ├── metrics.cpp
+│   ├── collector.cpp
+│   ├── exporter.cpp
+│   └── main.cpp
+├── test/
+├── CMakeLists.txt
+└── README.md
+```
+
+**核心功能**:
+
+| 功能 | 描述 |
+|------|------|
+| 节点监控 | CPU/内存/线程实时监控 |
+| Topic 统计 | 吞吐量/延迟/丢包统计 |
+| Prometheus | Prometheus 格式指标导出 |
+| 热点分析 | CPU 热点分析接口 |
+
+**依赖**: mlog, mruntime, mdds
+
+**验收标准**:
+- [ ] 实时 CPU/内存监控
+- [ ] Topic 吞吐量/延迟统计
+- [ ] Prometheus 格式导出
+- [ ] HTTP metrics 端点
+
+---
+
+### 6.4 mtls - 安全传输层 (Phase 2, P1)
+
+**优先级理由**: V2X、OTA、远程诊断的安全基础
+
+**目录结构**:
+
+```
+mtls/
+├── include/mtls/
+│   ├── mtls.h               # 主头文件
+│   ├── tls_channel.h        # TLS 通道
+│   ├── cert_manager.h       # 证书管理
+│   ├── session.h            # 会话管理
+│   └── types.h              # 类型定义
+├── src/
+│   ├── tls_channel.cpp
+│   ├── cert_manager.cpp
+│   ├── session.cpp
+│   └── main.cpp
+├── test/
+├── CMakeLists.txt
+└── README.md
+```
+
+**核心功能**:
+
+| 功能 | 描述 |
+|------|------|
+| TLS/DTLS | 加密通道建立 |
+| 证书管理 | X.509 证书加载/验证 |
+| 密钥轮换 | 自动密钥轮换机制 |
+| HSM 接口 | 硬件安全模块集成 |
+
+**依赖**: mcom, mlog
+
+**验收标准**:
+- [ ] TLS 1.3 加密通道
+- [ ] X.509 证书验证
+- [ ] 双向认证 (mTLS)
+- [ ] 会话恢复机制
+
+---
+
+### 6.5 mbridge - 外部系统桥接 (Phase 3, P2)
+
+**优先级理由**: 与 ROS2、AUTOSAR AP 等系统集成
+
+**目录结构**:
+
+```
+mbridge/
+├── include/mbridge/
+│   ├── mbridge.h            # 主头文件
+│   ├── ros2_bridge.h        # ROS2 桥接
+│   ├── autosar_bridge.h     # AUTOSAR 桥接
+│   ├── protocol_conv.h      # 协议转换
+│   └── types.h              # 类型定义
+├── src/
+│   ├── ros2_bridge.cpp
+│   ├── autosar_bridge.cpp
+│   ├── protocol_conv.cpp
+│   └── main.cpp
+├── test/
+├── CMakeLists.txt
+└── README.md
+```
+
+**核心功能**:
+
+| 功能 | 描述 |
+|------|------|
+| ROS2 桥接 | rclcpp <-> mcom 双向转换 |
+| AUTOSAR 桥接 | AUTOSAR Adaptive 集成 |
+| 协议转换 | SOME/IP <-> DDS 消息映射 |
+| 类型映射 | 消息格式自动转换 |
+
+**依赖**: mcom, mdds, msomeip
+
+**验收标准**:
+- [ ] ROS2 Topic 双向桥接
+- [ ] ROS2 Service 双向桥接
+- [ ] 消息格式自动映射
+- [ ] 延迟 < 10ms
+
+---
+
+### 6.6 mcal - 标定模块 (Phase 3, P2)
+
+**优先级理由**: 感知/控制算法标定需求
+
+**目录结构**:
+
+```
+mcal/
+├── include/mcal/
+│   ├── mcal.h               # 主头文件
+│   ├── cal_param.h          # 标定参数
+│   ├── cal_server.h         # 标定服务端
+│   ├── cal_client.h         # 标定客户端
+│   └── types.h              # 类型定义
+├── src/
+│   ├── cal_param.cpp
+│   ├── cal_server.cpp
+│   ├── cal_client.cpp
+│   └── main.cpp
+├── test/
+├── CMakeLists.txt
+└── README.md
+```
+
+**核心功能**:
+
+| 功能 | 描述 |
+|------|------|
+| 参数管理 | 标定参数定义与存储 |
+| 在线标定 | 运行时参数调整 |
+| 版本管理 | 标定数据版本控制 |
+| 精度验证 | 标定结果验证 |
+
+**依赖**: mparam, mcom, mlog
+
+**验收标准**:
+- [ ] 在线参数调整
+- [ ] 标定数据持久化
+- [ ] 版本回滚支持
+- [ ] 标定精度报告
+
+---
+
+### 6.7 时间线规划
+
+```
+Phase 1 (交付必需):
+├── mdiag  - UDS诊断 (ASIL合规)       Week 1-4
+└── mrecord - 数据录制/回放           Week 5-8
+
+Phase 2 (生产就绪):
+├── mperf  - 性能监控                 Week 9-12
+└── mtls   - 安全传输                 Week 13-16
+
+Phase 3 (生态集成):
+├── mbridge - ROS2/AUTOSAR桥接        Week 17-20
+└── mcal    - 标定支持                Week 21-24
+```
+
+---
+
+## 七、验收标准
 
 ### P0 Bug 修复验收
 
