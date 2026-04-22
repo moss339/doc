@@ -1,6 +1,6 @@
 # MOSS 项目里程碑路线图
 
-> 最后更新：2026-04-19
+> 最后更新：2026-04-23
 
 ---
 
@@ -397,3 +397,4 @@ GitHub: https://github.com/moss339/mupgrade
 | 2026-04-19 | 新增 mupgrade 模块：远程管理 CLI，支持节点管理、升级、日志、配置、监控；GitHub 仓库已创建 |
 | 2026-04-19 | 新增未来模块规划：mdiag、mrecord、mperf、mtls、mbridge、mcal |
 | 2026-04-21 | **mcal 模块完成**：在线标定模块，支持参数管理、版本控制、约束验证；Phase 1-3 全部完成 |
+| 2026-04-23 | **构建系统完善**：moss.yaml 添加 mperf/mtls/mbridge 模块配置；全量构建验证通过；21 个库安装到 dist |
